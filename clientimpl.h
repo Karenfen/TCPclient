@@ -2,7 +2,8 @@
 
 #include <QObject>
 #include <memory>
-#include <QTcpSocket>
+
+#include "tcpconnection.h"
 
 
 class clientImpl : public QObject
@@ -14,24 +15,19 @@ public:
 protected:
     clientImpl(QObject *parent = nullptr);
     void connect_to_host(const std::string& address, const uint16_t& port);
-    bool is_connected();
     void disconnect_host();
     void run_session();
+    bool send_request();
+    bool is_connected();
 
 private:
-    void data_handling_(const QByteArray& data);
+    void data_handling_(const std::string& data);
 
 private slots:
-    void send_request();
-//    void request_sent(qint64 bytes);
-//    void receive_response();
     void exit();
 
-signals:
-//    void request_ready();
-
 private:
-    std::unique_ptr<QTcpSocket> socket_ptr_{};
+    std::unique_ptr<TCPconnection> connection_{};
     std::string request_{};
 
     friend class TCPclient;

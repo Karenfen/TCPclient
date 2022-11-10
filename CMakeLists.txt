@@ -13,12 +13,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Network REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Network REQUIRED)
+find_package(OpenSSL REQUIRED)
 
-add_executable(TCPclient
+add_executable(${PROJECT_NAME}
   main.cpp
   tcpclient.cpp
   tcpclient.h
   clientimpl.cpp
   clientimpl.h
+  tcpconnection.cpp
+  tcpconnection.h
 )
-target_link_libraries(TCPclient Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
+
+include_directories("C:/OpenSSL-Win64/include")
+
+target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
+target_link_libraries(${PROJECT_NAME} ${OpenSSL_LIBRARIES})

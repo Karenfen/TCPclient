@@ -6,23 +6,16 @@
 #include <iostream>
 #include <QApplication>
 
-#define __MAXIMUM_WAITING_TIME 3000
 
 
 
 clientImpl::clientImpl(QObject *parent) : QObject(parent),
-    socket_ptr_(std::make_unique<QTcpSocket>())
+    connection_(std::make_unique<TCPconnection>())
 {
-    if(!socket_ptr_)
-        throw std::runtime_error("Socket initialization error!");
+    if(!connection_)
+        throw std::runtime_error("Initialization error!");
 
-    socket_ptr_->setSocketOption(QAbstractSocket::LowDelayOption, 0);
-
-    connect(socket_ptr_.get(), &QTcpSocket::disconnected, this, &clientImpl::exit);
-//    connect(socket_ptr_.get(), &QTcpSocket::bytesWritten, this, &clientImpl::request_sent);
-//    connect(socket_ptr_.get(), &QTcpSocket::readyRead, this, &clientImpl::receive_response);
-//    connect(this, &clientImpl::request_ready, this, &clientImpl::send_request);
-
+    connect(connection_.get(), &TCPconnection::disconnected, this, &clientImpl::exit);
 }
 
 
@@ -39,40 +32,31 @@ void clientImpl::connect_to_host(const std::string &address, const uint16_t& por
         if(host_address.isNull())
             throw std::logic_error("Incorrect address!");
 
-        socket_ptr_->connectToHost(host_address, port);
-
-        if(!socket_ptr_->waitForConnected(__MAXIMUM_WAITING_TIME))
-            throw std::logic_error("Connection timed out!");
+        if(!connection_->connectTo(host_address, port))
+            throw std::logic_error(connection_->getLastError());
     }
     else
     {
         for(const QHostAddress& address : addresses)
         {
-            socket_ptr_->connectToHost(address, port);
-
             std::cout << "Trying to connect to " << address.toString().toStdString() << "/" << port << std::endl;
 
-            if(socket_ptr_->waitForConnected(__MAXIMUM_WAITING_TIME))
+            if(connection_->connectTo(address, port))
                 break;
             else
                 std::cerr << "Connection timed out!" << std::endl;
         }
     }
 
-    if(socket_ptr_->state() != QAbstractSocket::ConnectedState)
+    if(!connection_->isConnected())
         throw std::logic_error("Connection error!");
-}
-
-
-bool clientImpl::is_connected()
-{
-    return (socket_ptr_->state() == QAbstractSocket::ConnectedState);
 }
 
 
 void clientImpl::disconnect_host()
 {
-    socket_ptr_->disconnectFromHost();
+    if(!connection_->_disconnect())
+        throw std::logic_error("Disconnection error!");
 }
 
 
@@ -80,78 +64,63 @@ void clientImpl::run_session()
 {
     std::cout << "session started!" << std::endl;
 
-    while (is_connected())
-    {
-        send_request();
-
-        if(!socket_ptr_->waitForBytesWritten())
-        {
-            std::cerr << "An error occurred while sending the request!" << std::endl;
+    while (connection_->isConnected())
+    {      
+        if(!send_request())
             continue;
-        }
+
 
         std::cout << "Request sent. Size (" << request_.length() << " bytes)" << std::endl;
         std::cout << "Waiting an answer..." << std::endl;
 
-        if(!socket_ptr_->waitForReadyRead())
+        std::string answer;
+
+        if(!connection_->read(answer))
         {
-            std::cerr << "Response timed out" << std::endl;
+            std::cerr << connection_->getLastError() << std::endl;
             continue;
         }
 
-        std::cout << "receiving an answer..." << std::endl;
+        std::cout << "answer received" << std::endl;
 
-        QByteArray response = socket_ptr_->readAll();
-
-        data_handling_(response);
+        data_handling_(answer);
     }
 
-    //send_request();
 }
 
 
-void clientImpl::data_handling_(const QByteArray &data)
+void clientImpl::data_handling_(const std::string &data)
 {
-    std::cout << "Response received!\n" << data.toStdString() << std::endl;
+    std::cout << "Response received!\n" << data << std::endl;
 }
 
 
-void clientImpl::send_request()
+bool clientImpl::send_request()
 {
-    if(socket_ptr_->state() != QAbstractSocket::ConnectedState)
-        throw std::logic_error("Connection aborted!");
-
     std::getline(std::cin, request_);
 
     std::cout << "sending a request..." << std::endl;
 
-    if(socket_ptr_->write(QByteArray(request_.c_str())) == -1)
-        std::cerr << "An error occurred while sending the request!" << std::endl;
+    if(!connection_->write(request_))
+    {
+        std::cerr << connection_->getLastError() << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 
-//void clientImpl::request_sent(qint64 bytes)
-//{
-//    std::cout << "Request sent. Size (" << bytes << " bytes)" << std::endl;
-
-//    receive_response();
-//}
+bool clientImpl::is_connected()
+{
+    return connection_->isConnected();
+}
 
 
-//void clientImpl::receive_response()
-//{
-//    std::cout << "receiving an answer..." << std::endl;
-
-//    QByteArray response = socket_ptr_->readAll();
-
-//    data_handling_(response);
-
-//    send_request();
-//}
 
 void clientImpl::exit()
 {
-    socket_ptr_->abort();
+    connection_->abort();
 
     std::cout << "Connection to the server was interrupted!" << std::endl;
 
