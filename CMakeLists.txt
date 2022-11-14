@@ -23,9 +23,12 @@ add_executable(${PROJECT_NAME}
   clientimpl.h
   tcpconnection.cpp
   tcpconnection.h
+  iconnection.h
+  tcpconnectionssl.cpp
+  tcpconnectionssl.h
 )
 
 include_directories("C:/OpenSSL-Win64/include")
 
 target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
-target_link_libraries(${PROJECT_NAME} ${OpenSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})

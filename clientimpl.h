@@ -2,8 +2,7 @@
 
 #include <QObject>
 #include <memory>
-
-#include "tcpconnection.h"
+#include "iconnection.h"
 
 
 class clientImpl : public QObject
@@ -18,17 +17,18 @@ protected:
     void disconnect_host();
     void run_session();
     bool send_request();
+    bool recive_data(std::string& buffer);
     bool is_connected();
 
-private:
-    void data_handling_(const std::string& data);
+signals:
+    void close_app(int exit_code);
 
 private slots:
     void exit();
+    void data_handling(std::string data);
 
 private:
-    std::unique_ptr<TCPconnection> connection_{};
-    std::string request_{};
+    std::unique_ptr<Iconnection> connection_{};
 
     friend class TCPclient;
 };

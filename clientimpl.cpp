@@ -5,17 +5,19 @@
 #include <QHostInfo>
 #include <iostream>
 #include <QApplication>
+#include "tcpconnectionssl.h"
 
 
 
 
 clientImpl::clientImpl(QObject *parent) : QObject(parent),
-    connection_(std::make_unique<TCPconnection>())
+    connection_(new TCPconnectionSSL())
 {
     if(!connection_)
         throw std::runtime_error("Initialization error!");
 
-    connect(connection_.get(), &TCPconnection::disconnected, this, &clientImpl::exit);
+    connect(dynamic_cast<TCPconnectionSSL*>(connection_.get()), &TCPconnectionSSL::disconnected, this, &clientImpl::exit);
+    connect(this, &clientImpl::close_app, this, [](int exit_code){qApp->exit();});
 }
 
 
@@ -67,41 +69,51 @@ void clientImpl::run_session()
     while (connection_->isConnected())
     {      
         if(!send_request())
-            continue;
+            break;
 
-
-        std::cout << "Request sent. Size (" << request_.length() << " bytes)" << std::endl;
-        std::cout << "Waiting an answer..." << std::endl;
+        std::cout << "Request sent." << std::endl;
 
         std::string answer;
+        std::cout << "Waiting an answer..." << std::endl;
 
-        if(!connection_->read(answer))
-        {
-            std::cerr << connection_->getLastError() << std::endl;
-            continue;
-        }
+        if(!recive_data(answer))
+            break;
 
-        std::cout << "answer received" << std::endl;
+        std::cout << "Received (" << answer.size() << ") bytes." << std::endl;
 
-        data_handling_(answer);
+        data_handling(answer);
     }
 
+    std::cout << "Sission ended!" << std::endl;
 }
 
 
-void clientImpl::data_handling_(const std::string &data)
+void clientImpl::data_handling(std::string data)
 {
-    std::cout << "Response received!\n" << data << std::endl;
+    std::cout << data << std::endl;
 }
 
 
 bool clientImpl::send_request()
 {
-    std::getline(std::cin, request_);
+    std::string request{};
 
-    std::cout << "sending a request..." << std::endl;
+    std::getline(std::cin, request);
 
-    if(!connection_->write(request_))
+    if(!connection_->write(request))
+    {
+        std::cerr << connection_->getLastError() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+
+bool clientImpl::recive_data(std::string &buffer)
+{
+    buffer = connection_->read();
+    if(buffer.empty())
     {
         std::cerr << connection_->getLastError() << std::endl;
         return false;
