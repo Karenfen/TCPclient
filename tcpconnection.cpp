@@ -11,20 +11,20 @@ TCPconnection::TCPconnection(QObject *parent) : QObject(parent),
     socketPtr_->setSocketOption(QAbstractSocket::LowDelayOption, 0);
 
     connect(socketPtr_.get(), &QTcpSocket::disconnected, this, &TCPconnection::close);
+    connect(socketPtr_.get(), QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
+            [=](QAbstractSocket::SocketError socketError){this->lastError = socketPtr_->errorString().toStdString();});
 }
 
 
-bool TCPconnection::connectTo(const QHostAddress& Address, uint16_t port, QIODevice::OpenMode openMode)
+bool TCPconnection::connectTo(const QHostAddress& Address, uint16_t port)
 {
-    socketPtr_->connectToHost(Address, port, openMode);
+    socketPtr_->connectToHost(Address, port);
 
-    if(!socketPtr_->waitForConnected(__MAXIMUM_WAITING_TIME))
-    {
-        lastError = "Connection timed out!";
-        return false;
-    }
+    if(socketPtr_->waitForConnected(__MAXIMUM_WAITING_TIME))
+        return true;
 
-    return true;
+    lastError = socketPtr_->errorString().toStdString();
+    return false;
 }
 
 
@@ -32,10 +32,10 @@ bool TCPconnection::_disconnect()
 {
     socketPtr_->disconnectFromHost();
 
-    if(socketPtr_->waitForDisconnected())
+    if(socketPtr_->waitForDisconnected(__MAXIMUM_WAITING_TIME))
         return true;
 
-    lastError = "Disconnection timed out!";
+    lastError = socketPtr_->errorString().toStdString();
     return false;
 }
 
@@ -46,17 +46,18 @@ bool TCPconnection::isConnected()
 }
 
 
-bool TCPconnection::read(std::string &buffer)
+std::string TCPconnection::read()
 {
-    if(!socketPtr_->waitForReadyRead())
+    std::string result{};
+    if(!socketPtr_->waitForReadyRead(__MAXIMUM_WAITING_TIME))
     {
-        lastError = "Reading timed out";
-        return false;
+        lastError = socketPtr_->errorString().toStdString();
+        return result;
     }
 
-    buffer = socketPtr_->readAll().toStdString();
+    result = socketPtr_->readAll().toStdString();
 
-    return true;
+    return result;
 }
 
 
@@ -64,13 +65,13 @@ bool TCPconnection::write(const std::string &data)
 {
     if(socketPtr_->write(QByteArray(data.c_str())) == -1)
     {
-        lastError = "Write error!";
+        lastError = socketPtr_->errorString().toStdString();
         return false;
     }
 
-    if(!socketPtr_->waitForBytesWritten())
+    if(!socketPtr_->waitForBytesWritten(__MAXIMUM_WAITING_TIME))
     {
-        lastError = "Writing timed out!";
+        lastError = socketPtr_->errorString().toStdString();
         return false;
     }
 

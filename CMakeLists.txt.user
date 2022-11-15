@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 5.0.2, 2022-10-28T12:36:11. -->
+<!-- Written by QtCreator 5.0.2, 2022-11-15T18:36:53. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -298,7 +298,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">TCPclient</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.TCPclient</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">TCPclient</value>
-    <value type="QString" key="RunConfiguration.Arguments">localhost 1223</value>
+    <value type="QString" key="RunConfiguration.Arguments">google.com 80</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>

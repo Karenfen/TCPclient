@@ -1,27 +1,26 @@
 #pragma once
 
-
 #include <QObject>
 #include <QTcpSocket>
 #include <memory>
+#include "Iconnection.h"
 
 
-#define __MAXIMUM_WAITING_TIME 3000
 
 
-class TCPconnection : public QObject
+class TCPconnection : public QObject, public Iconnection
 {
     Q_OBJECT
 public:
-    explicit TCPconnection(QObject *parent = nullptr);
-    ~TCPconnection(){ abort(); }
-    bool connectTo(const QHostAddress& Address, uint16_t port, QIODevice::OpenMode openMode = QIODevice::OpenModeFlag::ReadWrite);
-    bool _disconnect();
-    const std::string& getLastError(){ return lastError; }
-    bool isConnected();
-    bool read(std::string& buffer);
-    bool write(const std::string& data);
-    void abort();
+    TCPconnection(QObject *parent = nullptr);
+    ~TCPconnection() override { abort(); }
+    bool connectTo(const QHostAddress& Address, uint16_t port) override;
+    bool _disconnect() override;
+    const std::string& getLastError() override { return lastError; }
+    bool isConnected() override;
+    std::string read() override;
+    bool write(const std::string& data) override;
+    void abort() override;
 
 signals:
     void disconnected();
