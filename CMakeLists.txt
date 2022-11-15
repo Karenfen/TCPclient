@@ -19,8 +19,6 @@ add_executable(${PROJECT_NAME}
   main.cpp
   tcpclient.cpp
   tcpclient.h
-  clientimpl.cpp
-  clientimpl.h
   tcpconnection.cpp
   tcpconnection.h
   iconnection.h
