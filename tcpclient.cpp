@@ -1,5 +1,6 @@
 #include "tcpclient.h"
 #include "tcpconnection.h"
+#include "tcpconnectionssl.h"
 
 #include <QString>
 #include <QHostAddress>
@@ -10,14 +11,42 @@
 
 
 
-TCPclient::TCPclient(QObject *parent) : QObject(parent),
-    connection_(new TCPconnection())
+TCPclient::TCPclient(QObject *parent) : QObject(parent)
 {
-    if(!connection_)
-        throw std::runtime_error("Initialization error!");
 
-    connect(dynamic_cast<TCPconnection*>(connection_.get()), &TCPconnection::disconnected, this, &TCPclient::exit);
+}
+
+
+bool TCPclient::init(int type)
+{
+
+    switch (type)
+    {
+    case Connection::QTCPSOCK:
+        connection_ = std::make_unique<TCPconnection>();
+        if(!connection_)
+            return false;
+        connect(dynamic_cast<TCPconnection*>(connection_.get()), &TCPconnection::disconnected, this, &TCPclient::exit);
+        break;
+    case Connection::QTCPSSL:
+        connection_ = std::make_unique<TCPconnectionSSL>();
+        if(!connection_)
+            return false;
+        connect(dynamic_cast<TCPconnectionSSL*>(connection_.get()), &TCPconnectionSSL::disconnected, this, &TCPclient::exit);
+        break;
+//    case Connection::CURL:
+//        connection_ = std::make_unique<cURLconnection>();
+//        if(!connection_)
+//            return false;
+//        break;
+    default:
+        Error::ErrorHandling("Invalid parameter (connection type)");
+        return false;
+    }
+
     connect(this, &TCPclient::close_app, this, [](int exit_code){qApp->exit();});
+
+    return true;
 }
 
 
@@ -127,7 +156,6 @@ bool TCPclient::is_connected()
 {
     return connection_->isConnected();
 }
-
 
 
 void TCPclient::exit()

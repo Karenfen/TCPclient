@@ -12,6 +12,22 @@ namespace Error
     {
         std::cerr << "ERROR! : " << error << std::endl;
     }
+
+    static void help(const std::string& parameter)
+    {
+        if(parameter == "-H")
+        {
+            std::cout << "Additional call options:\n"
+                      << "\t 0 \t - \t Qt client.\n"
+                      << "\t 1 \t - \t Qt client whith SSL.\n"
+                      << "\t 2 \t - \t cURL client.\n"
+                      <<std::endl;
+        }
+    }
+}
+
+namespace Connection {
+    enum TYPE { QTCPSOCK, QTCPSSL, CURL };
 }
 
 
@@ -22,6 +38,7 @@ class TCPclient : public QObject
 public:
     ~TCPclient() = default;
     TCPclient(QObject *parent = nullptr);
+    bool init(int type = 0);
     void connect_to_host(const std::string& address, const uint16_t& port);
     void disconnect_host();
     void run_session();

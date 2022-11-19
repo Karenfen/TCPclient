@@ -2,11 +2,29 @@
 
 
 
-TCPconnectionSSL::TCPconnectionSSL(QObject *parent) : QObject(parent),
-    socketPtr_(std::make_unique<QTcpSocket>()), SSLptr_(nullptr)
+TCPconnectionSSL::TCPconnectionSSL(QObject *parent) : QObject(parent)
 {
+
+}
+
+
+TCPconnectionSSL::~TCPconnectionSSL()
+{
+    this->disconnect();
+    SSL_shutdown(SSLptr_);
+    socketPtr_->abort();
+}
+
+
+bool TCPconnectionSSL::init()
+{
+    socketPtr_ = std::make_unique<QTcpSocket>();
+
     if(!socketPtr_)
-        throw std::runtime_error("Initialization error!");
+    {
+        lastError = "Initialization error!";
+        return false;
+    }
 
     socketPtr_->setSocketOption(QAbstractSocket::LowDelayOption, 0);
 
@@ -23,15 +41,12 @@ TCPconnectionSSL::TCPconnectionSSL(QObject *parent) : QObject(parent),
     SSLptr_ = SSL_new(ssl_ctx);
 
     if(!SSLptr_)
-        throw std::runtime_error(getSSLerror());
-}
+    {
+        lastError = getSSLerror();
+        return false;
+    }
 
-
-TCPconnectionSSL::~TCPconnectionSSL()
-{
-    this->disconnect();
-    SSL_shutdown(SSLptr_);
-    socketPtr_->abort();
+    return true;
 }
 
 

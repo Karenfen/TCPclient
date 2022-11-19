@@ -17,6 +17,7 @@ class TCPconnectionSSL : public QObject, public Iconnection
 public:
     TCPconnectionSSL(QObject *parent = nullptr);
     ~TCPconnectionSSL() override;
+    bool init() override;
     bool connectTo(const QHostAddress& Address, uint16_t port) override;
     bool _disconnect() override;
     const std::string& getLastError() override { return lastError; }
@@ -33,8 +34,8 @@ private slots:
     void close();
 
 private:
-    std::unique_ptr<QTcpSocket> socketPtr_{};
-    SSL* SSLptr_{};
+    std::unique_ptr<QTcpSocket> socketPtr_{nullptr};
+    SSL* SSLptr_{nullptr};
     std::string lastError{};
 };
 

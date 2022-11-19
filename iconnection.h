@@ -16,6 +16,7 @@ class Iconnection
 {
 public:
     virtual ~Iconnection() = default ;
+    bool virtual init() = 0;
     bool virtual connectTo(const QHostAddress& Address, uint16_t port) = 0;
     bool virtual _disconnect() = 0;
     str virtual getLastError() = 0;
