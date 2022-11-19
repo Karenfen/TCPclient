@@ -2,17 +2,21 @@
 
 
 
-TCPconnection::TCPconnection(QObject *parent) : QObject(parent),
-    socketPtr_(std::make_unique<QTcpSocket>())
+bool TCPconnection::init()
 {
     if(!socketPtr_)
-        throw std::runtime_error("Initialization error!");
+    {
+        lastError = "Initialization error!" + socketPtr_->errorString().toStdString();
+        return false;
+    }
 
     socketPtr_->setSocketOption(QAbstractSocket::LowDelayOption, 0);
 
     connect(socketPtr_.get(), &QTcpSocket::disconnected, this, &TCPconnection::close);
     connect(socketPtr_.get(), QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
             [=](QAbstractSocket::SocketError socketError){this->lastError = socketPtr_->errorString().toStdString();});
+
+    return true;
 }
 
 
