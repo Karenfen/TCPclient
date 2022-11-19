@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define __MAXIMUM_WAITING_TIME 10000
+#define __MAXIMUM_WAITING_TIME 3000
 #define __MAX_BUFFER_SIZE 256
 
 class QHostAddress;
@@ -16,7 +16,6 @@ class Iconnection
 {
 public:
     virtual ~Iconnection() = default ;
-    bool virtual init() = 0;
     bool virtual connectTo(const QHostAddress& Address, uint16_t port) = 0;
     bool virtual _disconnect() = 0;
     str virtual getLastError() = 0;
