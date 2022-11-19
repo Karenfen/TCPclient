@@ -15,6 +15,8 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Network REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Network REQUIRED)
 find_package(OpenSSL REQUIRED)
 
+
+
 add_executable(${PROJECT_NAME}
   main.cpp
   tcpclient.cpp
@@ -22,6 +24,9 @@ add_executable(${PROJECT_NAME}
   iconnection.h
   tcpconnection.cpp
   tcpconnection.h
+  curlconnection.h
+  curlconnection.cpp
+  cURLwrapper.h
 )
 
 include_directories("C:/OpenSSL-Win64/include")
